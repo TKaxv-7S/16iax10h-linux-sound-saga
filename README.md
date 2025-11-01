@@ -81,3 +81,7 @@ I don't know,
 ## Offer: I will fund a kernel developer to fix this
 
 Submit a patch that works and I'll donate to your favorite charity. I mean it. I don't know how much. Two hundred dollars? I'm not exactly drowning in money. I can help you test via my hardware.
+
+## Are you also having this problem???
+
+If so, please yell loudly at my general direction! Try to raise it up on kernel audio mailing lists! Respond to this [kernel.org Bugzilla discussion I'm trying to be active in](https://bugzilla.kernel.org/show_bug.cgi?id=218329)! Participate in increasing the amount in my above charity donation pledge!
