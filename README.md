@@ -139,19 +139,55 @@ Copy the `HiFi-analog.conf` file from this repository to `/usr/share/alsa/ucm2/H
 sudo cp -f HiFi-analog.conf /usr/share/alsa/ucm2/HDA/HiFi-analog.conf
 ```
 
-Then run the following commands:
+First, identify your sound card ID by running:
 
 ```bash
-alsaucm reset
-alsaucm reload
-amixer sset Master 100%
-amixer sset Headphone 100%
-amixer sset Speaker 100%
+alsaucm listcards
+```
+
+You should get something like this:
+
+```bash
+0: hw:0
+  LENOVO-83F5-LegionPro716IAX10H-LNVNB161216
+```
+
+Then, run the commands below, If you got `hw:1` above, change `hw:0` to `hw:1` and `-c 0` to `-c 1`:
+
+```bash
+alsaucm -c hw:0 reset
+alsaucm -c hw:0 reload
+amixer sset -c 0 Master 100%
+amixer sset -c 0 Headphone 100%
+amixer sset -c 0 Speaker 100%
 ```
 
 **Note:** The last three commands are for speaker calibration, not for setting your volume to maximum. They must be run for the speakers to function properly, but they do not control your actual volume level.
 
-## Step 9: Enjoy Working Audio!
+## Step 9: Install NVidia DKMS Drivers
+
+To ensure proper graphics integration, you'll need to install the NVidia DKMS drivers for your custom kernel.
+
+### Arch Linux (Tested)
+
+Install the NVidia DKMS package and headers:
+
+```bash
+sudo pacman -S nvidia-open-dkms
+```
+
+The DKMS system will automatically build the NVidia kernel modules for your custom kernel. After installation, reboot to load the new drivers.
+
+In case you need to recompile and reinstall the driver, use the `dkms` utility:
+
+```bash
+sudo dkms build nvidia/580.105.08 --force
+sudo dkms install nvidia/580.105.08 --force
+```
+
+You may need to replace `580.105.08` with the actual NVidia driver version.
+
+## Step 10: Enjoy Working Audio!
 
 That's it! Your audio should now work correctly and permanently. This fix will persist across reboots with no additional steps required.
 
