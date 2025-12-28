@@ -52,7 +52,32 @@ CONFIG_SND_SOC_SOF_INTEL_MTL=m
 CONFIG_SND_SOC_SOF_INTEL_LNL=m
 ```
 
-Configure the rest of the kernel as appropriate for your machine.
+Configure the rest of the kernel as appropriate for your machine. 
+
+<details>
+<summary><h3>Using your existing system kernel configuration (optional)</h3></summary>
+
+Often this configuration can be accomplished simply by dumping your current sysyrm kernel config into a `.config` file in the root of your Linux kernel source directory: 
+
+```
+cat /proc/config.gz | gunzip > .config
+```
+
+If configured this way, paste the kernel configuration options above into the end of the `.config`:
+
+```
+cat >> .config <<EOF
+CONFIG_SND_HDA_SCODEC_AW88399=m
+CONFIG_SND_HDA_SCODEC_AW88399_I2C=m
+CONFIG_SND_SOC_AW88399=m
+CONFIG_SND_SOC_SOF_INTEL_TOPLEVEL=y
+CONFIG_SND_SOC_SOF_INTEL_COMMON=m
+CONFIG_SND_SOC_SOF_INTEL_MTL=m
+CONFIG_SND_SOC_SOF_INTEL_LNL=m
+EOF
+```
+</details>
+
 
 ## Step 5: Compile and Install the Kernel
 
