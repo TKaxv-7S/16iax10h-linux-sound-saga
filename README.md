@@ -52,7 +52,21 @@ The patch should apply successfully to 10 files without any errors.
 
 For the fix to work, the following kernel configuration options must be enabled:
 
+#### Intel
 ```
+CONFIG_SND_HDA_SCODEC_AW88399=m
+CONFIG_SND_HDA_SCODEC_AW88399_I2C=m
+CONFIG_SND_SOC_AW88399=m
+CONFIG_SND_SOC_SOF_INTEL_TOPLEVEL=y
+CONFIG_SND_SOC_SOF_INTEL_COMMON=m
+CONFIG_SND_SOC_SOF_INTEL_MTL=m
+CONFIG_SND_SOC_SOF_INTEL_LNL=m
+EOF
+```
+
+#### AMD
+```
+cat >> .config <<EOF
 CONFIG_SND_HDA_SCODEC_AW88399=m
 CONFIG_SND_HDA_SCODEC_AW88399_I2C=m
 CONFIG_SND_SOC_AW88399=m
@@ -63,6 +77,7 @@ CONFIG_SND_SOC_SOF_AMD_RENOIR=m
 CONFIG_SND_SOC_SOF_AMD_SOUNDWIRE=m
 CONFIG_SND_SOC_SOF_AMD_TOPLEVEL=m
 CONFIG_SND_SOC_SOF_AMD_VANGOGH=m
+EOF
 ```
 
 Configure the rest of the kernel as appropriate for your machine. 
@@ -78,6 +93,20 @@ cat /proc/config.gz | gunzip > .config
 
 If configured this way, paste the kernel configuration options above into the end of the `.config`. This can be done manually or with a command:
 
+#### Intel
+```
+cat >> .config <<EOF
+CONFIG_SND_HDA_SCODEC_AW88399=m
+CONFIG_SND_HDA_SCODEC_AW88399_I2C=m
+CONFIG_SND_SOC_AW88399=m
+CONFIG_SND_SOC_SOF_INTEL_TOPLEVEL=y
+CONFIG_SND_SOC_SOF_INTEL_COMMON=m
+CONFIG_SND_SOC_SOF_INTEL_MTL=m
+CONFIG_SND_SOC_SOF_INTEL_LNL=m
+EOF
+```
+
+#### AMD
 ```
 cat >> .config <<EOF
 CONFIG_SND_HDA_SCODEC_AW88399=m
@@ -130,7 +159,7 @@ You may need to replace `580.105.08` with the actual NVidia driver version.
 
 </details>
 
-## ~~Step 7: Generate the initramfs~~
+## Step 7: Generate the initramfs
 
 The process differs between distributions, as some use `dracut` while others use `mkinitcpio`. Instructions for common distributions are provided below.
 
@@ -214,7 +243,7 @@ Replace `your-root-partition-uuid` with your actual root partition UUID (find it
 
 Reboot into the patched kernel. After rebooting, run `uname -a` to verify that you're running the correct kernel.
 
-## ~~Step 9: Install the Patched ALSA UCM2 Configuration~~
+## Step 9: Install the Patched ALSA UCM2 Configuration
 
 This step is necessary for proper volume control.
 
