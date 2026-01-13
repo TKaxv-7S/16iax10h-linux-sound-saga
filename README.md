@@ -130,7 +130,7 @@ You may need to replace `580.105.08` with the actual NVidia driver version.
 
 </details>
 
-## ~~Step 7: Generate the initramfs~~
+## Step 7: Generate the initramfs
 
 The process differs between distributions, as some use `dracut` while others use `mkinitcpio`. Instructions for common distributions are provided below.
 
@@ -214,7 +214,7 @@ Replace `your-root-partition-uuid` with your actual root partition UUID (find it
 
 Reboot into the patched kernel. After rebooting, run `uname -a` to verify that you're running the correct kernel.
 
-## ~~Step 9: Install the Patched ALSA UCM2 Configuration~~
+## Step 9: Install the Patched ALSA UCM2 Configuration
 
 This step is necessary for proper volume control.
 
