@@ -1,3 +1,11 @@
+### Merged some fix
+- Code From [This Issues](https://github.com/nadimkobeissi/16iax10h-linux-sound-saga/issues/30#issuecomment-3698065776)
+- Author By [marco-giunta](https://github.com/marco-giunta)
+
+#### If need, you can add grub boot parameters: `snd_hda_codec_alc269.legion_mic_boost=2`
+
+#### ___Internal microphone boost level for Lenovo Legion laptops (0-3, default: 1, recommended: 0-2)___
+
 # Guide: Linux Audio on the Lenovo Legion Pro 7i Gen 10 (16IAX10H)
 
 This guide explains how to get audio working correctly on the Lenovo Legion Pro 7i Gen 10 (**16IAX10H**). Since this solution is still very new, it will take some time for all components to be properly integrated into the Linux kernel. Until that happens, you can follow the steps below, which have been rigorously tested and are confirmed to work. This guide will be updated for future kernel versions as they are released, until the fix is fully integrated into the kernel.
@@ -27,13 +35,15 @@ If you prefer to obtain your own copy of this firmware blob, [follow these instr
 This patch is tested under the following kernel versions. Click the one you desire to download its corresponding source code:
 
  - [Linux 6.18](https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.18.tar.xz) (also verified to work on **6.18.1**, **6.18.2** and **6.18.3**.).
+ - [Linux 6.17.9](https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.17.9.tar.xz).
+ - [Linux 6.17.8](https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.17.8.tar.xz).
 
 ## Step 3: Patch the Linux Kernel Sources
 
-Copy the `16iax10h-audio-linux-<YOUR_KERNEL_VERSION>.patch` file from this repository's `fix/patches` folder into the root of your Linux kernel source directory. Then run:
+Copy the `linux_<YOUR_KERNEL_VERSION>_patch_amd_boost_param.patch` file from this repository's `fix/patches` folder into the root of your Linux kernel source directory. Then run:
 
 ```bash
-patch -p1 < 16iax10h-audio-linux-<YOUR_KERNEL_VERSION>.patch
+patch -p1 < linux_<YOUR_KERNEL_VERSION>_patch_amd_boost_param.patch
 ```
 
 The patch should apply successfully to 10 files without any errors.
@@ -46,10 +56,13 @@ For the fix to work, the following kernel configuration options must be enabled:
 CONFIG_SND_HDA_SCODEC_AW88399=m
 CONFIG_SND_HDA_SCODEC_AW88399_I2C=m
 CONFIG_SND_SOC_AW88399=m
-CONFIG_SND_SOC_SOF_INTEL_TOPLEVEL=y
-CONFIG_SND_SOC_SOF_INTEL_COMMON=m
-CONFIG_SND_SOC_SOF_INTEL_MTL=m
-CONFIG_SND_SOC_SOF_INTEL_LNL=m
+CONFIG_SND_SOC_SOF_AMD_ACP63=m
+CONFIG_SND_SOC_SOF_AMD_ACP70=m
+CONFIG_SND_SOC_SOF_AMD_REMBRANDT=m
+CONFIG_SND_SOC_SOF_AMD_RENOIR=m
+CONFIG_SND_SOC_SOF_AMD_SOUNDWIRE=m
+CONFIG_SND_SOC_SOF_AMD_TOPLEVEL=m
+CONFIG_SND_SOC_SOF_AMD_VANGOGH=m
 ```
 
 Configure the rest of the kernel as appropriate for your machine. 
@@ -70,10 +83,13 @@ cat >> .config <<EOF
 CONFIG_SND_HDA_SCODEC_AW88399=m
 CONFIG_SND_HDA_SCODEC_AW88399_I2C=m
 CONFIG_SND_SOC_AW88399=m
-CONFIG_SND_SOC_SOF_INTEL_TOPLEVEL=y
-CONFIG_SND_SOC_SOF_INTEL_COMMON=m
-CONFIG_SND_SOC_SOF_INTEL_MTL=m
-CONFIG_SND_SOC_SOF_INTEL_LNL=m
+CONFIG_SND_SOC_SOF_AMD_ACP63=m
+CONFIG_SND_SOC_SOF_AMD_ACP70=m
+CONFIG_SND_SOC_SOF_AMD_REMBRANDT=m
+CONFIG_SND_SOC_SOF_AMD_RENOIR=m
+CONFIG_SND_SOC_SOF_AMD_SOUNDWIRE=m
+CONFIG_SND_SOC_SOF_AMD_TOPLEVEL=m
+CONFIG_SND_SOC_SOF_AMD_VANGOGH=m
 EOF
 ```
 </details>
@@ -114,7 +130,7 @@ You may need to replace `580.105.08` with the actual NVidia driver version.
 
 </details>
 
-## Step 7: Generate the initramfs
+## ~~Step 7: Generate the initramfs~~
 
 The process differs between distributions, as some use `dracut` while others use `mkinitcpio`. Instructions for common distributions are provided below.
 
@@ -198,7 +214,7 @@ Replace `your-root-partition-uuid` with your actual root partition UUID (find it
 
 Reboot into the patched kernel. After rebooting, run `uname -a` to verify that you're running the correct kernel.
 
-## Step 9: Install the Patched ALSA UCM2 Configuration
+## ~~Step 9: Install the Patched ALSA UCM2 Configuration~~
 
 This step is necessary for proper volume control.
 
