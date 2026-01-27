@@ -10,6 +10,10 @@
 
 This guide explains how to get audio working correctly on the Lenovo Legion Pro 7i Gen 10 (**16IAX10H**). Since this solution is still very new, it will take some time for all components to be properly integrated into the Linux kernel. Until that happens, you can follow the steps below, which have been rigorously tested and are confirmed to work. This guide will be updated for future kernel versions as they are released, until the fix is fully integrated into the kernel.
 
+## We need someone to take care of upstreaming this
+
+If you have time, please work on upstreaming these changes to the Linux kernel and keep ups posted in your progress. [This comment on the Kernel Bugzilla](https://bugzilla.kernel.org/show_bug.cgi?id=218329#c24) has some pointers.
+
 ## Confirmed to work on multiple devices!
 
 To our surprise, this fix actually fixed audio on more laptops than just the 16IAX10H! List of confirmed compatible devices:
@@ -34,15 +38,19 @@ If you prefer to obtain your own copy of this firmware blob, [follow these instr
 
 This patch is tested under the following kernel versions. Click the one you desire to download its corresponding source code:
 
- - [Linux 6.18](https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.18.tar.xz) (also verified to work on **6.18.1**, **6.18.2** and **6.18.3**.).
+ - [Linux 6.18](https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.18.tar.xz) (also verified to work on **6.18.1**, **6.18.2**, **6.18.3**, **6.18.4**, **6.18.5**.).
  - [Linux 6.17.9](https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.17.9.tar.xz).
  - [Linux 6.17.8](https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.17.8.tar.xz).
 
 ## Step 3: Patch the Linux Kernel Sources
 
+Copy the `16iax10h-audio-linux-<YOUR_KERNEL_VERSION>.patch` file from this repository's `fix/patches` folder into the root of your Linux kernel source directory. Then run:
+or
 Copy the `linux_<YOUR_KERNEL_VERSION>_patch_amd_boost_param.patch` file from this repository's `fix/patches` folder into the root of your Linux kernel source directory. Then run:
 
 ```bash
+patch -p1 < 16iax10h-audio-linux-<YOUR_KERNEL_VERSION>.patch
+or
 patch -p1 < linux_<YOUR_KERNEL_VERSION>_patch_amd_boost_param.patch
 ```
 
