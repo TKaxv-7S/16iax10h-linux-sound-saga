@@ -4,7 +4,7 @@ This guide explains how to get audio working correctly on the Lenovo Legion Pro 
 
 ## We need someone to take care of upstreaming this
 
-If you have time, please work on upstreaming these changes to the Linux kernel and keep ups posted in your progress. [This comment on the Kernel Bugzilla](https://bugzilla.kernel.org/show_bug.cgi?id=218329#c24) has some pointers.
+If you have time, please work on upstreaming these changes to the Linux kernel and keep us posted in your progress. [This comment on the Kernel Bugzilla](https://bugzilla.kernel.org/show_bug.cgi?id=218329#c24) has some pointers.
 
 ## Confirmed to work on multiple devices!
 
@@ -30,7 +30,8 @@ If you prefer to obtain your own copy of this firmware blob, [follow these instr
 
 This patch is tested under the following kernel versions. Click the one you desire to download its corresponding source code:
 
- - [Linux 6.18](https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.18.tar.xz) (also verified to work on **6.18.1**, **6.18.2**, **6.18.3**, **6.18.4**, **6.18.5**.).
+ - [Linux 6.19](https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.19.tar.xz)
+ - [Linux 6.18](https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.18.tar.xz) (also verified to work on **6.18.1**, **6.18.2**, **6.18.3**, **6.18.4**, **6.18.5**).
 
 ## Step 3: Patch the Linux Kernel Sources
 
