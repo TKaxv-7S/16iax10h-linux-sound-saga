@@ -273,19 +273,19 @@ alsaucm listcards
 You should get something like this:
 
 ```bash
-0: hw:0
+0: hw:1
   LENOVO-83F5-LegionPro716IAX10H-LNVNB161216
 ```
 
 Then, run the commands below, If you got `hw:1` above, change `hw:0` to `hw:1` and `-c 0` to `-c 1`:
 
 ```bash
-alsaucm -c hw:0 reset
-alsaucm -c hw:0 reload
+sudo alsaucm -c hw:1 reset
+sudo alsaucm -c hw:1 reload
 systemctl --user restart pipewire pipewire-pulse wireplumber
-amixer sset -c 0 Master 100%
-amixer sset -c 0 Headphone 100%
-amixer sset -c 0 Speaker 100%
+sudo amixer sset -c 1 Master 100% unmute
+sudo amixer sset -c 1 Headphone 100% unmute
+sudo amixer sset -c 1 Speaker 100% unmute
 ```
 
 **Note:** The last three commands are for speaker calibration, not for setting your volume to maximum. They must be run for the speakers to function properly, but they do not control your actual volume level.
