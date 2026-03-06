@@ -54,20 +54,20 @@ diff -u -r -N linux-6.19/sound/hda/codecs/realtek/alc269.c patched/sound/hda/cod
  static void cs35l41_fixup_i2c_two(struct hda_codec *cdc, const struct hda_fixup *fix, int action)
  {
  	comp_generic_fixup(cdc, action, "i2c", "CSC3551", "-%s:00-cs35l41-hda.%d", 2);
-@@ -3738,6 +3748,8 @@
- 	ALC269_FIXUP_POSITIVO_P15X_HEADSET_MIC,
- 	ALC289_FIXUP_ASUS_ZEPHYRUS_DUAL_SPK,
- 	ALC256_FIXUP_VAIO_RPL_MIC_NO_PRESENCE,
+@@ -4056,6 +4066,8 @@
+	ALC236_FIXUP_HP_MUTE_LED_MICMUTE_GPIO,
+	ALC233_FIXUP_LENOVO_GPIO2_MIC_HOTKEY,
+	ALC245_FIXUP_BASS_HP_DAC,
 +	ALC287_FIXUP_AW88399_I2C_2,
 +	ALC287_FIXUP_LENOVO_LEGION_AW88399,
  };
 
  /* A special fixup for Lenovo C940 and Yoga Duet 7;
-@@ -6189,6 +6201,16 @@
- 			{ }
- 		},
- 		.chained = true,
- 		.chain_id = ALC269_FIXUP_LIMIT_INT_MIC_BOOST
+@@ -6574,6 +6586,16 @@
+ 	[ALC245_FIXUP_BASS_HP_DAC] = {
+ 		.type = HDA_FIXUP_FUNC,
+ 		/* Borrow the DAC routing selected for those Thinkpads */
+ 		.v.func = alc285_fixup_thinkpad_x1_gen7,
 +	},
 +	[ALC287_FIXUP_AW88399_I2C_2] = {
 +		.type = HDA_FIXUP_FUNC,
@@ -78,10 +78,10 @@ diff -u -r -N linux-6.19/sound/hda/codecs/realtek/alc269.c patched/sound/hda/cod
 +		.v.func = alc287_fixup_legion_16iax_aw88399,
 +		.chained = true,
 +		.chain_id = ALC287_FIXUP_AW88399_I2C_2,
- 	}
+ 	},
  };
 
-@@ -7143,12 +7165,15 @@
+@@ -7567,12 +7589,15 @@
  	SND_PCI_QUIRK(0x17aa, 0x38fa, "Thinkbook 16P Gen5", ALC287_FIXUP_MG_RTKC_CSAMP_CS35L41_I2C_THINKPAD),
  	SND_PCI_QUIRK(0x17aa, 0x38fd, "ThinkBook plus Gen5 Hybrid", ALC287_FIXUP_TAS2781_I2C),
  	SND_PCI_QUIRK(0x17aa, 0x3902, "Lenovo E50-80", ALC269_FIXUP_DMIC_THINKPAD_ACPI),
