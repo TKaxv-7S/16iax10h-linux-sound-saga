@@ -68,7 +68,7 @@ diff -u -r -N linux-6.19/sound/hda/codecs/realtek/alc269.c patched/sound/hda/cod
  		.type = HDA_FIXUP_FUNC,
  		/* Borrow the DAC routing selected for those Thinkpads */
  		.v.func = alc285_fixup_thinkpad_x1_gen7,
-+	},
+ 	},
 +	[ALC287_FIXUP_AW88399_I2C_2] = {
 +		.type = HDA_FIXUP_FUNC,
 +		.v.func = aw88399_fixup_i2c_two,
@@ -78,7 +78,7 @@ diff -u -r -N linux-6.19/sound/hda/codecs/realtek/alc269.c patched/sound/hda/cod
 +		.v.func = alc287_fixup_legion_16iax_aw88399,
 +		.chained = true,
 +		.chain_id = ALC287_FIXUP_AW88399_I2C_2,
- 	}
++	}
  };
 
 @@ -7567,12 +7589,15 @@
