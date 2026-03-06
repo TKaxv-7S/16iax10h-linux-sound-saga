@@ -63,7 +63,7 @@ diff -u -r -N linux-6.19/sound/hda/codecs/realtek/alc269.c patched/sound/hda/cod
  };
 
  /* A special fixup for Lenovo C940 and Yoga Duet 7;
-@@ -6574,6 +6586,16 @@
+@@ -6584,6 +6596,16 @@
  	[ALC245_FIXUP_BASS_HP_DAC] = {
  		.type = HDA_FIXUP_FUNC,
  		/* Borrow the DAC routing selected for those Thinkpads */
@@ -81,7 +81,7 @@ diff -u -r -N linux-6.19/sound/hda/codecs/realtek/alc269.c patched/sound/hda/cod
 +	}
  };
 
-@@ -7567,12 +7589,15 @@
+@@ -7566,12 +7586,15 @@
  	SND_PCI_QUIRK(0x17aa, 0x38fa, "Thinkbook 16P Gen5", ALC287_FIXUP_MG_RTKC_CSAMP_CS35L41_I2C_THINKPAD),
  	SND_PCI_QUIRK(0x17aa, 0x38fd, "ThinkBook plus Gen5 Hybrid", ALC287_FIXUP_TAS2781_I2C),
  	SND_PCI_QUIRK(0x17aa, 0x3902, "Lenovo E50-80", ALC269_FIXUP_DMIC_THINKPAD_ACPI),
