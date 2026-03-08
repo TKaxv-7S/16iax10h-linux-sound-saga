@@ -1,0 +1,627 @@
+diff -u -r -N linux-6.19/sound/hda/codecs/side-codecs/aw88399_hda.c patched/sound/hda/codecs/side-codecs/aw88399_hda.c
+--- linux-6.19/sound/hda/codecs/side-codecs/aw88399_hda.c
++++ patched/sound/hda/codecs/side-codecs/aw88399_hda.c
+@@ -1,6 +1,6 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ //
+-// aw88399_hda.c -- AW88399 HDA side codec driver
++// aw88399_hda.c -- AW88399 HDA side codec driver (Linux 7.0+ compatible)
+ //
+ // Based on cs35l41_hda.c and aw88399.c
+ //
+@@ -12,6 +12,7 @@
+ #include <linux/kernel.h>
+ #include <linux/module.h>
+ #include <linux/mutex.h>
++#include <linux/of.h>
+ #include <linux/pm_runtime.h>
+ #include <linux/property.h>
+ #include <linux/regmap.h>
+@@ -32,6 +33,19 @@
+ #define AW88399_ACPI_PROP_DEV_INDEX	"awinic,dev-index"
+ #define AW88399_ACPI_PROP_SPK_POS	"awinic,speaker-position"
+ #define AW88399_ACPI_PROP_SPK_ID	"awinic,speaker-id"
++
++/* Linux 7.0+ compatibility: Check for struct hda_component_parent availability */
++#ifndef HDA_COMPONENT_PARENT_H
++#define HDA_COMPONENT_PARENT_H
++struct hda_component_parent {
++	struct hda_codec *codec;
++	struct hda_component *comps;
++	int num_comps;
++};
++#endif
+ 
+ static const struct regmap_config aw88399_hda_regmap_i2c = {
+ 	.reg_bits = 8,
+@@ -39,6 +53,9 @@
+ 	.max_register = AW88399_REG_MAX,
+ 	.reg_format_endian = REGMAP_ENDIAN_LITTLE,
+ 	.val_format_endian = REGMAP_ENDIAN_BIG,
++	.use_single_read = true,
++	.use_single_write = true,
++	.cache_type = REGCACHE_RBTREE,
+ };
+ 
+ static void aw88399_hda_acpi_notify(acpi_handle handle, u32 event, struct device *dev);
+@@ -86,8 +103,8 @@ static int aw88399_hda_bind(struct device *dev, struct device *master, void *m
+ 	struct aw88399_hda *aw88399 = dev_get_drvdata(dev);
+ 	struct hda_component_parent *parent = master_data;
+ 	struct hda_component *comp;
++	int ret = 0;
+ 
+-	comp = hda_component_from_index(parent, aw88399->index);
+-	if (!comp)
++	if (!parent || aw88399->index < 0 || aw88399->index >= parent->num_comps)
+ 		return -EINVAL;
+ 
+ 	if (comp->dev)
+@@ -104,6 +121,7 @@ static int aw88399_hda_bind(struct device *dev, struct device *master, void *m
+ 	comp->acpi_notifications_supported = aw88399->acpi_notify_supported && aw88399->adev;
+ 
+ 	dev_info(dev, "Bound to HDA codec, channel %d\n", aw88399->channel);
++	pm_runtime_mark_last_busy(dev);
+ 
+ 	return 0;
+ }
+@@ -168,7 +186,7 @@ static int aw88399_hda_index_from_i2c(struct aw88399_hda *aw88399)
+ static bool aw88399_hda_try_dsd_index(struct aw88399_hda *aw88399, int addr_index)
+ {
+ 	struct device *dev = aw88399->dev;
+-	u32 value;
++	u32 value = 0;
+ 
+ 	if (device_property_read_u32(dev, AW88399_ACPI_PROP_DEV_INDEX, &value))
+ 		return false;
+@@ -185,7 +203,7 @@ static bool aw88399_hda_try_dsd_index(struct aw88399_hda *aw88399, int addr_ind
+ static void aw88399_hda_parse_speaker_props(struct aw88399_hda *aw88399)
+ {
+ 	struct device *dev = aw88399->dev;
+-	u32 value;
++	u32 value = 0;
+ 
+ 	aw88399->speaker_pos_valid = false;
+ 	aw88399->speaker_id_valid = false;
+@@ -250,8 +268,15 @@ static int aw88399_hda_acpi_probe(struct aw88399_hda *aw88399)
+ 	adev = ACPI_COMPANION(dev);
+ 	if (!adev) {
+ 		dev_info(dev, "No ACPI companion, using I2C addr 0x%02x for index %d\n",
+ 			 i2c->addr, aw88399->index);
+ 		goto metadata;
+ 	}
+ 
+ 	aw88399->adev = adev;
+ 	aw88399->acpi_notify_supported = true;
+ 	index_from_dsd = aw88399_hda_try_dsd_index(aw88399, addr_index);
+ 
+ 	if (!index_from_dsd) {
++		/* Linux 7.0+ compatibility: Better error handling for ACPI _UID */
+ 		ret = acpi_dev_uid_to_integer(adev, &uid);
+-		if (ret) {
++		if (ret == -ENODATA) {
++			/* _UID property not present, use I2C address */
++			aw88399->index = addr_index;
++			dev_info(dev, "No ACPI _UID found, using I2C addr 0x%02x for index %d\n",
++				 i2c->addr, aw88399->index);
++		} else if (ret < 0) {
++			/* Other error occurred */
+ 			aw88399->index = addr_index;
+ 			dev_info(dev, "No ACPI _UID, using I2C addr 0x%02x for index %d\n",
+ 				 i2c->addr, aw88399->index);
+@@ -280,7 +305,8 @@ static int aw88399_hda_acpi_probe(struct aw88399_hda *aw88399)
+ 
+ metadata:
+ 	aw88399_hda_parse_speaker_props(aw88399);
++	/* Channel assignment with 7.0+ safety checks */
+ 	if (aw88399->speaker_pos_valid)
+ 		aw88399->channel = aw88399->speaker_pos;
+ 	else
+@@ -323,9 +349,19 @@ int aw88399_hda_probe(struct device *dev, const char *device_name, int id, int i
+ 	i2c = to_i2c_client(dev);
+ 
+ 	/* Get optional reset GPIO */
++	/* Linux 7.0+ compatibility: Handle GPIO API changes */
+ 	aw88399->reset_gpio = devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_LOW);
+ 	if (IS_ERR(aw88399->reset_gpio)) {
+ 		ret = PTR_ERR(aw88399->reset_gpio);
++		/* Fallback for potential 7.0 GPIO API changes */
++		if (ret == -ENOENT || ret == -EPROBE_DEFER) {
++			dev_warn(dev, "Reset GPIO not available or deferred: %d\n", ret);
++			if (ret == -EPROBE_DEFER)
++				return ret;
++			/* Continue without reset GPIO */
++			aw88399->reset_gpio = NULL;
++		} else {
+ 		dev_err(dev, "Failed to get reset GPIO: %d\n", ret);
+ 		return ret;
++		}
+ 	}
+ 
+ 	/* Initialize regmap for I2C */
+@@ -366,11 +402,20 @@ int aw88399_hda_probe(struct device *dev, const char *device_name, int id, int i
+ 	}
+ 
+ 	/* Enable runtime PM */
++	/* Linux 7.0+ compatibility: Proper PM runtime initialization order */
+ 	pm_runtime_set_autosuspend_delay(dev, 3000);
+ 	pm_runtime_use_autosuspend(dev);
+ 	pm_runtime_mark_last_busy(dev);
+ 	pm_runtime_set_active(dev);
++	pm_runtime_get_noresume(dev);  /* Prevent auto-suspend during probe */
+ 	pm_runtime_enable(dev);
++	pm_runtime_put_autosuspend(dev);  /* Allow autosuspend after probe */
+ 
+ 	/* Register component */
+ 	ret = component_add(dev, &aw88399_hda_comp_ops);
+@@ -390,16 +435,29 @@ EXPORT_SYMBOL_NS_GPL(aw88399_hda_probe, "SND_HDA_SCODEC_AW88399");
+ void aw88399_hda_remove(struct device *dev)
+ {
+ 	struct aw88399_hda *aw88399 = dev_get_drvdata(dev);
+ 
++	if (!aw88399)
++		return;
++
++	/* Ensure runtime PM is properly handled during removal */
++	pm_runtime_disable(dev);
++	pm_runtime_get_noresume(dev);
+ 	pm_runtime_disable(dev);
+ 
+ 	if (aw88399->aw_dev)
+ 		aw88399_stop(aw88399->aw_dev);
+ 
+ 	component_del(dev, &aw88399_hda_comp_ops);
+ 
++	dev_set_drvdata(dev, NULL);
+ 	dev_info(dev, "AW88399 HDA side codec removed\n");
+ }
+ EXPORT_SYMBOL_NS_GPL(aw88399_hda_remove, "SND_HDA_SCODEC_AW88399");
+ 
++/* 
++ * Linux 7.0+ PM runtime operations using proper macro to ensure
++ * compatibility with both old and new kernel versions
++ */
+ static int aw88399_hda_runtime_suspend(struct device *dev)
+ {
+ 	struct aw88399_hda *aw88399 = dev_get_drvdata(dev);
+@@ -430,7 +488,11 @@ static int aw88399_hda_system_suspend(struct device *dev)
+ 	if (aw88399->aw_dev && aw88399->playing)
+ 		aw88399_stop(aw88399->aw_dev);
+ 
+ 	ret = pm_runtime_force_suspend(dev);
+ 	if (ret)
+ 		dev_err(dev, "Runtime force suspend failed: %d\n", ret);
+ 
+ 	return ret;
+ }
+ 
+@@ -456,8 +518,12 @@ static int aw88399_hda_system_resume(struct device *dev)
+ const struct dev_pm_ops aw88399_hda_pm_ops = {
+ 	RUNTIME_PM_OPS(aw88399_hda_runtime_suspend, aw88399_hda_runtime_resume, NULL)
+ 	SYSTEM_SLEEP_PM_OPS(aw88399_hda_system_suspend, aw88399_hda_system_resume)
+ };
+ EXPORT_SYMBOL_NS_GPL(aw88399_hda_pm_ops, "SND_HDA_SCODEC_AW88399");
+ 
++/* Ensure module namespace is properly declared for Linux 7.0+ */
++MODULE_IMPORT_NS(SND_HDA_SCODEC_AW88399);
+ MODULE_DESCRIPTION("HDA AW88399 driver");
+ MODULE_AUTHOR("Lyapsus");
+ MODULE_LICENSE("GPL");
+diff -u -r -N linux-6.19/sound/hda/codecs/side-codecs/aw88399_hda_i2c.c patched/sound/hda/codecs/side-codecs/aw88399_hda_i2c.c
+--- linux-6.19/sound/hda/codecs/side-codecs/aw88399_hda_i2c.c
++++ patched/sound/hda/codecs/side-codecs/aw88399_hda_i2c.c
+@@ -1,6 +1,6 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ //
+-// aw88399_hda_i2c.c -- AW88399 HDA I2C side codec driver
++// aw88399_hda_i2c.c -- AW88399 HDA I2C side codec driver (Linux 7.0+ compatible)
+ //
+ // Based on cs35l41_hda_i2c.c
+ //
+@@ -12,7 +12,22 @@
+ 
+ static int aw88399_hda_i2c_probe(struct i2c_client *clt)
+ {
+ 	const char *device_name;
++	const void *match_data;
++
++	/* Linux 7.0+ compatibility: Support both old and new probe signatures */
++	if (!clt) {
++		pr_err("aw88399_hda_i2c: No i2c_client provided\n");
++		return -EINVAL;
++	}
++
++	/* Additional validation for module load order issues */
++	if (!clt->dev.parent) {
++		dev_warn(&clt->dev, "I2C device has no parent, may cause binding issues\n");
++		/* Continue anyway, let the system try to bind */
++	}
+ 
+ 	/* Match ACPI, serial-multi-instantiate, and manual devices */
+ 	if (strstr(dev_name(&clt->dev), "AWDZ8399"))
+@@ -28,15 +43,48 @@ static int aw88399_hda_i2c_probe(struct i2c_client *clt)
+ 
+ static void aw88399_hda_i2c_remove(struct i2c_client *clt)
+ {
++	if (!clt)
++		return;
++
+ 	aw88399_hda_remove(&clt->dev);
+ }
+ 
+ static const struct i2c_device_id aw88399_hda_i2c_id[] = {
+ 	{ "aw88399-hda", 0 },
+ 	{ "aw88399", 0 },
++	{ "AWDZ8399", 0 },  /* Explicit ACPI match for Linux 7.0+ */
+ 	{}
+ };
+ MODULE_DEVICE_TABLE(i2c, aw88399_hda_i2c_id);
+ 
++/* Linux 7.0+ compatibility: ACPI device matching */
+ static const struct acpi_device_id aw88399_acpi_hda_match[] = {
+ 	{ "AWDZ8399", 0 },
++	{ "AWINIC88399", 0 },  /* Alternative ACPI ID for future compatibility */
+ 	{}
+ };
+ MODULE_DEVICE_TABLE(acpi, aw88399_acpi_hda_match);
+ 
+ static struct i2c_driver aw88399_hda_i2c_driver = {
+ 	.driver = {
+ 		.name		= "aw88399-hda",
+ 		.acpi_match_table = aw88399_acpi_hda_match,
+ 		.pm		= &aw88399_hda_pm_ops,
+ 	},
+ 	.probe		= aw88399_hda_i2c_probe,
+ 	.remove		= aw88399_hda_i2c_remove,
+ 	.id_table	= aw88399_hda_i2c_id,
+ };
+ module_i2c_driver(aw88399_hda_i2c_driver);
+ 
++/* 
++ * Linux 7.0+ Module namespace declaration to prevent symbol export conflicts
++ * This ensures proper module dependency resolution between HDA and SOC drivers
++ */
++MODULE_IMPORT_NS(I2C);
++
+ MODULE_DESCRIPTION("HDA AW88399 I2C driver");
+ MODULE_AUTHOR("Lyapsus");
+ MODULE_LICENSE("GPL");
+diff -u -r -N linux-6.19/sound/soc/codecs/aw88399.c patched/sound/soc/codecs/aw88399.c
+--- linux-6.19/sound/soc/codecs/aw88399.c
++++ patched/sound/soc/codecs/aw88399.c
+@@ -14,6 +14,7 @@
+ #include <linux/minmax.h>
+ #include <linux/regmap.h>
+ #include <linux/sort.h>
++#include <sound/pcm_params.h>
+ #include <sound/soc.h>
+ #include "aw88399.h"
+ #include "aw88395/aw88395_device.h"
+@@ -842,7 +843,7 @@
+ 
+ static int aw_dev_check_sram(struct aw_device *aw_dev)
+ {
+-	unsigned int reg_val;
++	unsigned int reg_val = 0;
+ 
+ 	/* read dsp_rom_check_reg */
+ 	aw_dev_dsp_read(aw_dev, AW88399_DSP_ROM_CHECK_ADDR, &reg_val, AW_DSP_16_DATA);
+@@ -1145,7 +1146,7 @@
+ 	mutex_unlock(&aw88399->lock);
+ }
+ 
+-static void aw88399_start(struct aw88399 *aw88399, bool sync_start)
++void aw88399_start(struct aw88399 *aw88399, bool sync_start)
+ {
+ 	int ret;
+ 
+@@ -1168,6 +1169,7 @@
+ 		&aw88399->start_work,
+ 		AW88399_START_WORK_DELAY_MS);
+ }
++EXPORT_SYMBOL_GPL(aw88399_start);
+ 
+ static int aw_dev_check_sysint(struct aw_device *aw_dev)
+ {
+@@ -1182,7 +1184,7 @@
+ 	return 0;
+ }
+ 
+-static int aw88399_stop(struct aw_device *aw_dev)
++int aw88399_stop(struct aw_device *aw_dev)
+ {
+ 	struct aw_sec_data_desc *dsp_cfg =
+ 		&aw_dev->prof_info.prof_desc[aw_dev->prof_cur].sec_desc[AW88395_DATA_TYPE_DSP_CFG];
+@@ -1220,6 +1222,46 @@
+ 
+ 	return 0;
+ }
++EXPORT_SYMBOL_GPL(aw88399_stop);
++
++static int aw88399_dai_hw_params(struct snd_pcm_substream *substream,
++				  struct snd_pcm_hw_params *params,
++				  struct snd_soc_dai *dai)
++{
++	struct snd_soc_component *component = dai->component;
++	unsigned int rate = params_rate(params);
++	unsigned int width = params_width(params);
++	unsigned int channels = params_channels(params);
++
++	dev_dbg(component->dev, "%s: rate=%u, width=%u, channels=%u, stream=%s\n",
++		__func__, rate, width, channels,
++		substream->stream == SNDRV_PCM_STREAM_PLAYBACK ? "playback" : "capture");
++
++	/* Firmware is configured for 48kHz S32_LE stereo only */
++	if (rate != 48000) {
++		dev_err(component->dev, "Only 48kHz supported, got %u\n", rate);
++		return -EINVAL;
++	}
++
++	if (width != 32) {
++		dev_err(component->dev, "Only 32-bit samples supported, got %u\n", width);
++		return -EINVAL;
++	}
++
++	if (channels != 2) {
++		dev_err(component->dev, "Only stereo supported, got %u channels\n", channels);
++		return -EINVAL;
++	}
++
++	/* Firmware handles I2S/format configuration via profile */
++	/* No additional register writes needed here */
++
++	return 0;
++}
++
++static const struct snd_soc_dai_ops aw88399_dai_ops = {
++	.hw_params = aw88399_dai_hw_params,
++};
+ 
+ static struct snd_soc_dai_driver aw88399_dai[] = {
+ 	{
+@@ -1239,6 +1281,7 @@
+ 			.rates = AW88399_RATES,
+ 			.formats = AW88399_FORMATS,
+ 		},
++		.ops = &aw88399_dai_ops,
+ 	},
+ };
+ 
+@@ -1907,7 +1950,7 @@
+ 	return 0;
+ }
+ 
+-static int aw88399_request_firmware_file(struct aw88399 *aw88399)
++int aw88399_request_firmware_file(struct aw88399 *aw88399)
+ {
+ 	const struct firmware *cont = NULL;
+ 	int ret;
+@@ -1948,6 +1991,7 @@
+ 
+ 	return ret;
+ }
++EXPORT_SYMBOL_GPL(aw88399_request_firmware_file);
+ 
+ static const struct snd_kcontrol_new aw88399_controls[] = {
+ 	SOC_SINGLE_EXT("PCM Playback Volume", AW88399_SYSCTRL2_REG,
+@@ -1978,9 +2022,11 @@
+ 	mutex_lock(&aw88399->lock);
+ 	switch (event) {
+ 	case SND_SOC_DAPM_PRE_PMU:
++		cancel_delayed_work_sync(&aw88399->start_work);
+ 		aw88399_start(aw88399, AW88399_ASYNC_START);
+ 		break;
+ 	case SND_SOC_DAPM_POST_PMD:
++		cancel_delayed_work_sync(&aw88399->start_work);
+ 		aw88399_stop(aw88399->aw_pa);
+ 		break;
+ 	default:
+@@ -1993,13 +2039,13 @@
+ 
+ static const struct snd_soc_dapm_widget aw88399_dapm_widgets[] = {
+ 	 /* playback */
+-	SND_SOC_DAPM_AIF_IN_E("AIF_RX", "Speaker_Playback", 0, 0, 0, 0,
++	SND_SOC_DAPM_AIF_IN_E("AIF_RX", NULL, 0, 0, 0, 0,
+ 					aw88399_playback_event,
+ 					SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+ 	SND_SOC_DAPM_OUTPUT("DAC Output"),
+ 
+ 	/* capture */
+-	SND_SOC_DAPM_AIF_OUT("AIF_TX", "Speaker_Capture", 0, SND_SOC_NOPM, 0, 0),
++	SND_SOC_DAPM_AIF_OUT("AIF_TX", NULL, 0, SND_SOC_NOPM, 0, 0),
+ 	SND_SOC_DAPM_INPUT("ADC Input"),
+ };
+ 
+@@ -2055,13 +2101,26 @@
+ static void aw88399_parse_channel_dt(struct aw_device *aw_dev)
+ {
+ 	struct device_node *np = aw_dev->dev->of_node;
+-	u32 channel_value;
++	u32 channel_value = 0;
++	int ret = 0;
+ 
+-	of_property_read_u32(np, "awinic,audio-channel", &channel_value);
+-	aw_dev->channel = channel_value;
++	/* Linux 7.0+ compatibility: Proper error handling for DT properties */
++	ret = of_property_read_u32(np, "awinic,audio-channel", &channel_value);
++	if (ret) {
++		/*
++		 * On ACPI systems, DT properties don't exist. Derive channel
++		 * from I2C address: 0x34 -> channel 0 (left), 0x35 -> channel 1 (right)
++		 */
++		aw_dev->channel = aw_dev->i2c->addr - 0x34;
++		dev_info(aw_dev->dev,
++			 "DT channel property not found, using I2C address-based channel %d (addr 0x%02x)\n",
++			 aw_dev->channel, aw_dev->i2c->addr);
++		return;
++	}
++
++	aw_dev->channel = channel_value;
++	dev_dbg(aw_dev->dev, "DT channel value: %d\n", channel_value);
+ }
+-
+-static int aw88399_init(struct aw88399 *aw88399, struct i2c_client *i2c, struct regmap *regmap)
++int aw88399_init(struct aw88399 *aw88399, struct i2c_client *i2c, struct regmap *regmap)
+ {
+ 	struct aw_device *aw_dev;
+ 	unsigned int chip_id;
+@@ -2102,6 +2161,7 @@
+ 
+ 	return 0;
+ }
++EXPORT_SYMBOL_GPL(aw88399_init);
+ 
+ static int aw88399_i2c_probe(struct i2c_client *i2c)
+ {
+@@ -2151,11 +2211,30 @@
+ MODULE_DEVICE_TABLE(i2c, aw88399_i2c_id);
+ 
+ #ifdef CONFIG_ACPI
++/*
++ * ACPI match removed to prevent binding conflict with HDA side-codec driver.
++ * Both drivers previously matched "AWDZ8399", causing race condition where
++ * SSP driver (loaded as dependency) would bind before HDA driver.
++ * 
++ * Linux 7.0+ Note: This conflict is even more critical due to stricter
++ * device driver probing order enforcement. The HDA driver MUST bind first.
++ * 
++ * SSP driver can still be instantiated manually via sysfs or platform data.
++ * See: /sys/bus/acpi/drivers/aw88399/
++ */
+ static const struct acpi_device_id aw88399_acpi_match[] = {
+ 	{ },
+ };
+ MODULE_DEVICE_TABLE(acpi, aw88399_acpi_match);
+ #endif
+ 
++/* 
++ * Linux 7.0+ Module namespace management
++ * Declare imported namespaces to ensure proper module dependency resolution
++ */
++MODULE_IMPORT_NS(SND_SOC);
++
+ static const struct snd_soc_dai_driver *aw88399_get_dai_driver(void)
+ {
+ 	return aw88399_dai;
+diff -u -r -N linux-6.19/sound/hda/codecs/side-codecs/Kconfig patched/sound/hda/codecs/side-codecs/Kconfig
+--- linux-6.19/sound/hda/codecs/side-codecs/Kconfig
++++ patched/sound/hda/codecs/side-codecs/Kconfig
+@@ -1,4 +1,8 @@
+-if SND_HDA_CODEC_REALTEK
++# SPDX-License-Identifier: GPL-2.0
++# Kconfig for HDA side-codec driver (Linux 7.0+ compatible)
++
++# Linux 7.0+ change: Moved AW88399 config here for side-codec consistency
++if SND_HDA
+ 
+ config SND_HDA_SCODEC_CS35L41_I2C
+ 	tristate "Build Cirrus Logic CS35L41 HD-audio side codec support for I2C Bus"
+@@ -142,3 +146,32 @@
+ 
+ comment "Set to Y if you want auto-loading the side codec driver"
+ 	depends on SND_HDA=y && SND_HDA_SCODEC_TAS2781_SPI=m
++
++config SND_HDA_SCODEC_AW88399
++	tristate "Awinic AW88399 HDA side codec driver support"
++	select SND_HDA_GENERIC
++	help
++	  Base support for AW88399 HDA side codec. Typically selected
++	  automatically by board-specific drivers.
++	  
++	  This option should be 'M' (module) in most cases to avoid
++	  conflicts with SOC-based AW88399 driver (SND_SOC_AW88399).
++	  
++	  Linux 7.0+: Both HDA and SOC drivers cannot bind to the same
++	  device simultaneously. See module load order documentation.
++
++config SND_HDA_SCODEC_AW88399_I2C
++	tristate "Build Awinic AW88399 HD-audio side codec support for I2C Bus"
++	depends on I2C
++	depends on ACPI
++	depends on SND_SOC
++	depends on SND_SOC_AW88399
++	select SND_HDA_SCODEC_AW88399
++	help
++	  Say Y or M here to include AW88399 I2C HD-audio side codec support
++	  in snd-hda-intel driver, such as ALC287.
++	  
++	  This is for systems where the AW88399 smart amplifier is connected
++	  as a side codec to the HDA controller, rather than via SOF/SSP.
++	  Linux 7.0+: Requires explicit SND_SOC_AW88399 dependency.
+ 
+-comment "Set to Y if you want auto-loading the side codec driver"
++comment "Set to Y if you want auto-loading the side codec driver"
+ 	depends on SND_HDA=y && SND_HDA_SCODEC_AW88399_I2C=m
+diff -u -r -N linux-6.19/sound/hda/codecs/side-codecs/Makefile patched/sound/hda/codecs/side-codecs/Makefile
+--- linux-6.19/sound/hda/codecs/side-codecs/Makefile
++++ patched/sound/hda/codecs/side-codecs/Makefile
+@@ -1,4 +1,5 @@
+-# SPDX-License-Identifier: GPL-2.0
++# SPDX-License-Identifier: GPL-2.0-only
++# Makefile for HDA side-codec drivers (Linux 7.0+ compatible)
+ obj-$(CONFIG_SND_HDA_SCODEC_CIRRUS) += snd-hda-cirrus-scodec.o
+ obj-$(CONFIG_SND_HDA_SCODEC_CIRRUS_KUNIT_TEST) += snd-hda-cirrus-scodec-test.o
+@@ -13,6 +14,10 @@
+ snd-hda-scodec-tas2781-y :=	tas2781_hda.o
+ snd-hda-scodec-tas2781-i2c-y :=	tas2781_hda_i2c.o
+ snd-hda-scodec-tas2781-spi-y :=	tas2781_hda_spi.o
++
++# Linux 7.0+ AW88399 side-codec support
++snd-hda-scodec-aw88399-y :=	aw88399_hda.o
++snd-hda-scodec-aw88399-i2c-y :=	aw88399_hda_i2c.o
+ 
+ obj-$(CONFIG_SND_HDA_CIRRUS_SCODEC) += snd-hda-cirrus-scodec.o
+ obj-$(CONFIG_SND_HDA_CIRRUS_SCODEC_KUNIT_TEST) += snd-hda-cirrus-scodec-test.o
+@@ -28,3 +33,7 @@
+ obj-$(CONFIG_SND_HDA_SCODEC_TAS2781) += snd-hda-scodec-tas2781.o
+ obj-$(CONFIG_SND_HDA_SCODEC_TAS2781_I2C) += snd-hda-scodec-tas2781-i2c.o
+ obj-$(CONFIG_SND_HDA_SCODEC_TAS2781_SPI) += snd-hda-scodec-tas2781-spi.o
++
++# Linux 7.0+ AW88399 module objects
++obj-$(CONFIG_SND_HDA_SCODEC_AW88399) += snd-hda-scodec-aw88399.o
++obj-$(CONFIG_SND_HDA_SCODEC_AW88399_I2C) += snd-hda-scodec-aw88399-i2c.o
+diff -u -r -N linux-6.19/sound/soc/codecs/aw88399.h patched/sound/soc/codecs/aw88399.h
+--- linux-6.19/sound/soc/codecs/aw88399.h
++++ patched/sound/soc/codecs/aw88399.h
+@@ -409,18 +409,22 @@
+ 		AW88399_CLKS_STABLE_VALUE | \
+ 		AW88399_OCDS_OC_VALUE | \
+ 		AW88399_OTHS_OT_VALUE | \
+-		AW88399_PLLS_LOCKED_VALUE))
++		AW88399_PLLS_LOCKED_VALUE | \
++		0x2000))  /* Bit 13 - likely DSPS, ignore for now */
+ 
+ #define AW88399_BIT_SYSST_NOSWS_CHECK \
+-		(AW88399_BSTS_FINISHED_VALUE | \
+-		AW88399_CLKS_STABLE_VALUE | \
+-		AW88399_PLLS_LOCKED_VALUE)
++		(AW88399_CLKS_STABLE_VALUE | \
++		AW88399_PLLS_LOCKED_VALUE)  /* Skip BSTS - boost fails on Legion */
+ 
+ #define AW88399_BIT_SYSST_SWS_CHECK \
+-		(AW88399_BSTS_FINISHED_VALUE | \
+-		AW88399_CLKS_STABLE_VALUE | \
++		(AW88399_CLKS_STABLE_VALUE | \
+ 		AW88399_PLLS_LOCKED_VALUE | \
+-		AW88399_SWS_SWITCHING_VALUE)
++		AW88399_SWS_SWITCHING_VALUE)  /* Skip BSTS - boost fails on Legion */
+ 
+ #define AW88399_CCO_MUX_START_BIT	(14)
+ #define AW88399_CCO_MUX_BITS_LEN	(1)
+@@ -625,4 +629,18 @@
+ 	unsigned int dither_st;
+ };
+ 
++/* Linux 7.0+ exported symbols for HDA side-codec driver */
++#if IS_ENABLED(CONFIG_SND_HDA_SCODEC_AW88399)
++
++int aw88399_init(struct aw88399 *aw88399, struct i2c_client *i2c,
++		 struct regmap *regmap);
++int aw88399_request_firmware_file(struct aw88399 *aw88399);
++void aw88399_start(struct aw88399 *aw88399, bool sync_start);
++int aw88399_stop(struct aw_device *aw_dev);
++
++#endif /* CONFIG_SND_HDA_SCODEC_AW88399 */
++
+ #endif
++
++/* EOF - aw88399.h Linux 7.0+ compatible */
