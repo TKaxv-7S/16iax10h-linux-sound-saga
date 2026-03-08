@@ -2,17 +2,9 @@
 
 This guide explains how to get audio working correctly on the Lenovo Legion Pro 7i Gen 10 (**16IAX10H**). Since this solution is still very new, it will take some time for all components to be properly integrated into the Linux kernel. Until that happens, you can follow the steps below, which have been rigorously tested and are confirmed to work. This guide will be updated for future kernel versions as they are released, until the fix is fully integrated into the kernel.
 
-I use the linux-cachyos-bore kernel
-
-You can use this repo to build cachyos kernel : linux-cachyos
-
-Example build 6.19.5-2 kernel, you can
-
-1.checkout this commit: 4a363451cc86ff5304514c8bf25eac42eb46b8c8
-
 2.cd linux-cachyos-bore
 
-3.copy 16iax10h-audio-linux-6.19.patch into this path
+3.copy 16iax10h-audio-linux-7.0-compat.patch into this path
 
 4.add patch code into PKGBUILD, like:
 
@@ -21,7 +13,7 @@ source=(
     "https://github.com/CachyOS/linux/releases/download/${_srctag}/${_srctag}.tar.gz"
     "config")
 
-source+=("16iax10h-audio-linux-6.19.patch")        <--------- here
+source+=("16iax10h-audio-linux-7.0-compat.patch")        <--------- here
 
 # LLVM makedepends
 if _is_lto_kernel; then
