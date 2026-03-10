@@ -4,16 +4,20 @@ This guide explains how to get audio working correctly on the Lenovo Legion Pro 
 
 2.cd linux-cachyos-bore
 
-3.copy 16iax10h-audio-linux-7.0-compat.patch into this path
+3.copy aw88399-legion.patch into this path
 
 4.add patch code into PKGBUILD, like:
 
-_nv_open_pkg="NVIDIA-kernel-module-source-${_nv_ver}"
-source=(
-    "https://github.com/CachyOS/linux/releases/download/${_srctag}/${_srctag}.tar.gz"
-    "config")
+        # Skip our custom patch so we can apply it manually with fuzz
+        [[ "$src" == "aw88399-legion.patch" ]] && continue
 
-source+=("aw88399-legion.patch")        <--------- here
+        echo "Applying patch $src..."
+        patch -Np1 < "../$src"
+    done
+
+    # Apply the AW88399 Legion patch with fuzz allowed
+    echo "Applying patch aw88399-legion.patch with fuzz..."
+    patch -Np1 --fuzz=3 -i "$startdir/aw88399-legion.patch"
 
 # LLVM makedepends
 if _is_lto_kernel; then
