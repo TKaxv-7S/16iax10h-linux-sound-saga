@@ -1,6 +1,6 @@
-diff -u -r -N linux-6.19/drivers/acpi/scan.c patched/drivers/acpi/scan.c
---- linux-6.19/drivers/acpi/scan.c
-+++ patched/drivers/acpi/scan.c
+diff -u -r -N a/drivers/acpi/scan.c b/drivers/acpi/scan.c
+--- a/drivers/acpi/scan.c
++++ b/drivers/acpi/scan.c
 @@ -1760,6 +1760,7 @@
  	 * by the drivers/platform/x86/serial-multi-instantiate.c driver, which
  	 * knows which client device id to use for each resource.
@@ -9,9 +9,9 @@ diff -u -r -N linux-6.19/drivers/acpi/scan.c patched/drivers/acpi/scan.c
  		{"BSG1160", },
  		{"BSG2150", },
  		{"CSC3551", },
-diff -u -r -N linux-6.19/drivers/platform/x86/serial-multi-instantiate.c patched/drivers/platform/x86/serial-multi-instantiate.c
---- linux-6.19/drivers/platform/x86/serial-multi-instantiate.c
-+++ patched/drivers/platform/x86/serial-multi-instantiate.c
+diff -u -r -N a/drivers/platform/x86/serial-multi-instantiate.c b/drivers/platform/x86/serial-multi-instantiate.c
+--- a/drivers/platform/x86/serial-multi-instantiate.c
++++ b/drivers/platform/x86/serial-multi-instantiate.c
 @@ -399,11 +399,21 @@
  	.bus_type = SMI_AUTO_DETECT,
  };
@@ -34,9 +34,9 @@ diff -u -r -N linux-6.19/drivers/platform/x86/serial-multi-instantiate.c patched
  	{ "BSG1160", (unsigned long)&bsg1160_data },
  	{ "BSG2150", (unsigned long)&bsg2150_data },
  	{ "CSC3551", (unsigned long)&cs35l41_hda },
-diff -u -r -N linux-6.19/sound/hda/codecs/realtek/alc269.c patched/sound/hda/codecs/realtek/alc269.c
---- linux-6.19/sound/hda/codecs/realtek/alc269.c
-+++ patched/sound/hda/codecs/realtek/alc269.c
+diff -u -r -N a/sound/hda/codecs/realtek/alc269.c b/sound/hda/codecs/realtek/alc269.c
+--- a/sound/hda/codecs/realtek/alc269.c
++++ b/sound/hda/codecs/realtek/alc269.c
 @@ -2976,6 +2976,16 @@
  	comp_generic_fixup(cdc, HDA_FIXUP_ACT_PRE_PROBE, bus, acpi_ids[i].hid, match, count);
  }
@@ -54,20 +54,20 @@ diff -u -r -N linux-6.19/sound/hda/codecs/realtek/alc269.c patched/sound/hda/cod
  static void cs35l41_fixup_i2c_two(struct hda_codec *cdc, const struct hda_fixup *fix, int action)
  {
  	comp_generic_fixup(cdc, action, "i2c", "CSC3551", "-%s:00-cs35l41-hda.%d", 2);
-@@ -4056,6 +4066,8 @@
-	ALC236_FIXUP_HP_MUTE_LED_MICMUTE_GPIO,
-	ALC233_FIXUP_LENOVO_GPIO2_MIC_HOTKEY,
-	ALC245_FIXUP_BASS_HP_DAC,
+@@ -3816,6 +3826,8 @@
+ 	ALC245_FIXUP_HP_TAS2781_I2C_MUTE_LED,
+ 	ALC288_FIXUP_SURFACE_SWAP_DACS,
+ 	ALC236_FIXUP_HP_MUTE_LED_MICMUTE_GPIO,
 +	ALC287_FIXUP_AW88399_I2C_2,
 +	ALC287_FIXUP_LENOVO_LEGION_AW88399,
  };
 
  /* A special fixup for Lenovo C940 and Yoga Duet 7;
-@@ -6575,6 +6595,16 @@
+@@ -6305,6 +6317,16 @@
+ 	[ALC288_FIXUP_SURFACE_SWAP_DACS] = {
  		.type = HDA_FIXUP_FUNC,
- 		/* Borrow the DAC routing selected for those Thinkpads */
- 		.v.func = alc285_fixup_thinkpad_x1_gen7,
- 	},
+ 		.v.func = alc288_fixup_surface_swap_dacs,
++	},
 +	[ALC287_FIXUP_AW88399_I2C_2] = {
 +		.type = HDA_FIXUP_FUNC,
 +		.v.func = aw88399_fixup_i2c_two,
@@ -77,11 +77,10 @@ diff -u -r -N linux-6.19/sound/hda/codecs/realtek/alc269.c patched/sound/hda/cod
 +		.v.func = alc287_fixup_legion_16iax_aw88399,
 +		.chained = true,
 +		.chain_id = ALC287_FIXUP_AW88399_I2C_2,
-+	}
+ 	},
  };
 
- static const struct hda_quirk alc269_fixup_tbl[] = {
-@@ -7566,12 +7586,15 @@
+@@ -7287,12 +7309,15 @@
  	SND_PCI_QUIRK(0x17aa, 0x38fa, "Thinkbook 16P Gen5", ALC287_FIXUP_MG_RTKC_CSAMP_CS35L41_I2C_THINKPAD),
  	SND_PCI_QUIRK(0x17aa, 0x38fd, "ThinkBook plus Gen5 Hybrid", ALC287_FIXUP_TAS2781_I2C),
  	SND_PCI_QUIRK(0x17aa, 0x3902, "Lenovo E50-80", ALC269_FIXUP_DMIC_THINKPAD_ACPI),
@@ -97,9 +96,9 @@ diff -u -r -N linux-6.19/sound/hda/codecs/realtek/alc269.c patched/sound/hda/cod
  	SND_PCI_QUIRK(0x17aa, 0x3977, "IdeaPad S210", ALC283_FIXUP_INT_MIC),
  	SND_PCI_QUIRK(0x17aa, 0x3978, "Lenovo B50-70", ALC269_FIXUP_DMIC_THINKPAD_ACPI),
  	SND_PCI_QUIRK(0x17aa, 0x3bf8, "Quanta FL1", ALC269_FIXUP_PCM_44K),
-diff -u -r -N linux-6.19/sound/hda/codecs/side-codecs/Kconfig patched/sound/hda/codecs/side-codecs/Kconfig
---- linux-6.19/sound/hda/codecs/side-codecs/Kconfig
-+++ patched/sound/hda/codecs/side-codecs/Kconfig
+diff -u -r -N a/sound/hda/codecs/side-codecs/Kconfig b/sound/hda/codecs/side-codecs/Kconfig
+--- a/sound/hda/codecs/side-codecs/Kconfig
++++ b/sound/hda/codecs/side-codecs/Kconfig
 @@ -142,3 +142,24 @@
 
  comment "Set to Y if you want auto-loading the side codec driver"
@@ -125,9 +124,9 @@ diff -u -r -N linux-6.19/sound/hda/codecs/side-codecs/Kconfig patched/sound/hda/
 +
 +comment "Set to Y if you want auto-loading the side codec driver"
 +	depends on SND_HDA=y && SND_HDA_SCODEC_AW88399_I2C=m
-diff -u -r -N linux-6.19/sound/hda/codecs/side-codecs/Makefile patched/sound/hda/codecs/side-codecs/Makefile
---- linux-6.19/sound/hda/codecs/side-codecs/Makefile
-+++ patched/sound/hda/codecs/side-codecs/Makefile
+diff -u -r -N a/sound/hda/codecs/side-codecs/Makefile b/sound/hda/codecs/side-codecs/Makefile
+--- a/sound/hda/codecs/side-codecs/Makefile
++++ b/sound/hda/codecs/side-codecs/Makefile
 @@ -13,6 +13,8 @@
  snd-hda-scodec-tas2781-y :=	tas2781_hda.o
  snd-hda-scodec-tas2781-i2c-y :=	tas2781_hda_i2c.o
@@ -143,9 +142,9 @@ diff -u -r -N linux-6.19/sound/hda/codecs/side-codecs/Makefile patched/sound/hda
  obj-$(CONFIG_SND_HDA_SCODEC_TAS2781_SPI) += snd-hda-scodec-tas2781-spi.o
 +obj-$(CONFIG_SND_HDA_SCODEC_AW88399) += snd-hda-scodec-aw88399.o
 +obj-$(CONFIG_SND_HDA_SCODEC_AW88399_I2C) += snd-hda-scodec-aw88399-i2c.o
-diff -u -r -N linux-6.19/sound/hda/codecs/side-codecs/aw88399_hda.c patched/sound/hda/codecs/side-codecs/aw88399_hda.c
---- linux-6.19/sound/hda/codecs/side-codecs/aw88399_hda.c	1970-01-01 02:00:00.000000000 +0200
-+++ patched/sound/hda/codecs/side-codecs/aw88399_hda.c
+diff -u -r -N a/sound/hda/codecs/side-codecs/aw88399_hda.c b/sound/hda/codecs/side-codecs/aw88399_hda.c
+--- a/sound/hda/codecs/side-codecs/aw88399_hda.c	1970-01-01 02:00:00.000000000 +0200
++++ b/sound/hda/codecs/side-codecs/aw88399_hda.c
 @@ -0,0 +1,475 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +//
@@ -622,9 +621,9 @@ diff -u -r -N linux-6.19/sound/hda/codecs/side-codecs/aw88399_hda.c patched/soun
 +MODULE_DESCRIPTION("HDA AW88399 driver");
 +MODULE_AUTHOR("Lyapsus");
 +MODULE_LICENSE("GPL");
-diff -u -r -N linux-6.19/sound/hda/codecs/side-codecs/aw88399_hda.h patched/sound/hda/codecs/side-codecs/aw88399_hda.h
---- linux-6.19/sound/hda/codecs/side-codecs/aw88399_hda.h	1970-01-01 02:00:00.000000000 +0200
-+++ patched/sound/hda/codecs/side-codecs/aw88399_hda.h
+diff -u -r -N a/sound/hda/codecs/side-codecs/aw88399_hda.h b/sound/hda/codecs/side-codecs/aw88399_hda.h
+--- a/sound/hda/codecs/side-codecs/aw88399_hda.h	1970-01-01 02:00:00.000000000 +0200
++++ b/sound/hda/codecs/side-codecs/aw88399_hda.h
 @@ -0,0 +1,48 @@
 +/* SPDX-License-Identifier: GPL-2.0-only
 + *
@@ -674,9 +673,9 @@ diff -u -r -N linux-6.19/sound/hda/codecs/side-codecs/aw88399_hda.h patched/soun
 +extern const struct dev_pm_ops aw88399_hda_pm_ops;
 +
 +#endif /* __AW88399_HDA_H__ */
-diff -u -r -N linux-6.19/sound/hda/codecs/side-codecs/aw88399_hda_i2c.c patched/sound/hda/codecs/side-codecs/aw88399_hda_i2c.c
---- linux-6.19/sound/hda/codecs/side-codecs/aw88399_hda_i2c.c	1970-01-01 02:00:00.000000000 +0200
-+++ patched/sound/hda/codecs/side-codecs/aw88399_hda_i2c.c
+diff -u -r -N a/sound/hda/codecs/side-codecs/aw88399_hda_i2c.c b/sound/hda/codecs/side-codecs/aw88399_hda_i2c.c
+--- a/sound/hda/codecs/side-codecs/aw88399_hda_i2c.c	1970-01-01 02:00:00.000000000 +0200
++++ b/sound/hda/codecs/side-codecs/aw88399_hda_i2c.c
 @@ -0,0 +1,62 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +//
@@ -740,9 +739,9 @@ diff -u -r -N linux-6.19/sound/hda/codecs/side-codecs/aw88399_hda_i2c.c patched/
 +MODULE_AUTHOR("Lyapsus");
 +MODULE_LICENSE("GPL");
 +MODULE_IMPORT_NS("SND_HDA_SCODEC_AW88399");
-diff -u -r -N linux-6.19/sound/soc/codecs/aw88399.c patched/sound/soc/codecs/aw88399.c
---- linux-6.19/sound/soc/codecs/aw88399.c
-+++ patched/sound/soc/codecs/aw88399.c
+diff -u -r -N a/sound/soc/codecs/aw88399.c b/sound/soc/codecs/aw88399.c
+--- a/sound/soc/codecs/aw88399.c
++++ b/sound/soc/codecs/aw88399.c
 @@ -14,6 +14,7 @@
  #include <linux/minmax.h>
  #include <linux/regmap.h>
@@ -941,9 +940,9 @@ diff -u -r -N linux-6.19/sound/soc/codecs/aw88399.c patched/sound/soc/codecs/aw8
  	{ },
  };
  MODULE_DEVICE_TABLE(acpi, aw88399_acpi_match);
-diff -u -r -N linux-6.19/sound/soc/codecs/aw88399.h patched/sound/soc/codecs/aw88399.h
---- linux-6.19/sound/soc/codecs/aw88399.h
-+++ patched/sound/soc/codecs/aw88399.h
+diff -u -r -N a/sound/soc/codecs/aw88399.h b/sound/soc/codecs/aw88399.h
+--- a/sound/soc/codecs/aw88399.h
++++ b/sound/soc/codecs/aw88399.h
 @@ -409,18 +409,17 @@
  		AW88399_CLKS_STABLE_VALUE | \
  		AW88399_OCDS_OC_VALUE | \
