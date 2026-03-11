@@ -60,6 +60,30 @@ or
 patch -p1 < linux_<YOUR_KERNEL_VERSION>_patch_amd_boost_param.patch
 ```
 
+### for `cachyos` author by [nullnek0](https://github.com/nullnek0)
+
+```bash
+local src
+for src in "${source[@]}"; do
+    src="${src%%::*}"
+    # Skip nvidia patches
+    [[ "$src" == "${_patchsource}"/misc/nvidia/*.patch ]] && continue
+    src="${src##*/}"
+    src="${src%.zst}"
+    [[ $src = *.patch ]] || continue
+
+    # Skip our custom patch so we can apply it manually with fuzz
+    [[ "$src" == "16iax10h-audio-linux-<YOUR_KERNEL_VERSION>.patch" ]] && continue        <--------- here
+
+    echo "Applying patch $src..."
+    patch -Np1 < "../$src"
+done
+
+# Apply the AW88399 Legion patch with fuzz allowed
+echo "Applying patch 16iax10h-audio-linux-*.patch with fuzz..."
+patch -Np1 --fuzz=3 -i "$startdir/16iax10h-audio-linux-<YOUR_KERNEL_VERSION>.patch"        <--------- here
+```
+
 The patch should apply successfully to 10 files without any errors.
 
 ## Step 4: Configure the Kernel
