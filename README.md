@@ -2,9 +2,9 @@
 
 This guide explains how to get audio working correctly on the Lenovo Legion Pro 7i Gen 10 (**16IAX10H**). Since this solution is still very new, it will take some time for all components to be properly integrated into the Linux kernel. Until that happens, you can follow the steps below, which have been rigorously tested and are confirmed to work. This guide will be updated for future kernel versions as they are released, until the fix is fully integrated into the kernel.
 
-## WE NEED SOMEONE TO UPSTREAM THIS INTO THE KERNEL, DRIVERS AND OTHER RELEVANT PACKAGES! PLEASE VOLUNTEER TO DO THIS!
+## Upstream patch series status
 
-If you have time, please work on upstreaming these changes to the Linux kernel and keep us posted in your progress. [This comment on the Kernel Bugzilla](https://bugzilla.kernel.org/show_bug.cgi?id=218329#c24) has some pointers.
+Work to upstream this patch is currently ongoing; see [here](https://github.com/nadimkobeissi/16iax10h-linux-sound-saga/issues/55) for more details.
 
 ## Filing issues
 
@@ -18,6 +18,7 @@ To our surprise, this fix actually fixed audio on more laptops than just the 16I
 - Lenovo Legion Pro 7 Gen 10 (**[16AFR10H](https://github.com/nadimkobeissi/16iax10h-linux-sound-saga/issues/30)**)
 - Lenovo Legion 5i Gen 9 (**[16IRX9](https://github.com/nadimkobeissi/16iax10h-linux-sound-saga/issues/20)**)
 - Lenovo Legion Y9000P (**[IAX10H](https://github.com/nadimkobeissi/16iax10h-linux-sound-saga/issues/42)**)
+- Lenovo Legion R9000P (**[ADR10](https://github.com/marco-giunta/legion-pro7-gen10-audio/issues/3)**)
 
 If your laptop has a similar sound architecture and you're running into similar problems, please try this fix and let us know if it works for you too!
 
@@ -35,8 +36,7 @@ If you prefer to obtain your own copy of this firmware blob, [follow these instr
 
 This patch is tested under the following kernel versions. Click the one you desire to download its corresponding source code:
 
- - [Linux 7.0](https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.0.tar.xz)
- - [Linux 6.19.11](https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.19.11.tar.xz)
+ - [Linux 7.0.13](https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.0.13.tar.xz)
 
 ## Step 3: Patch the Linux Kernel Sources
 
