@@ -4,7 +4,7 @@ This guide explains how to get audio working correctly on the Lenovo Legion Pro 
 
 ## Upstream patch series status
 
-Work to upstream this patch is currently ongoing; see [here](https://github.com/nadimkobeissi/16iax10h-linux-sound-saga/issues/55) for more details.
+The patch has been submitted to the kernel mailing lists and is currently pending for review; see [#65](https://github.com/nadimkobeissi/16iax10h-linux-sound-saga/issues/65) for more info.
 
 ## Filing issues
 
