@@ -4,15 +4,15 @@ This guide explains how to get audio working correctly on the Lenovo Legion Pro 
 
 ## Upstream patch series status
 
-The patch has been submitted to the kernel mailing lists and is currently pending for review; see [#65](https://github.com/nadimkobeissi/16iax10h-linux-sound-saga/issues/65) for more info.
+The patch has been submitted to the kernel mailing lists and is currently under active review; part of the patch series has been accepted and should ship in kernel 7.3, the rest is still under review (but should follow soon).
+
+See [#65](https://github.com/nadimkobeissi/16iax10h-linux-sound-saga/issues/65) for more info.
 
 ## Filing issues
 
 Please don't file issues to complain about something missing. Filing issues about something being broken is fine, but if it's a request to add something, either add it yourself or just... politely don't speak.
 
-## Confirmed to work on multiple devices!
-
-To our surprise, this fix actually fixed audio on more laptops than just the 16IAX10H! List of confirmed compatible devices:
+## Supported devices
 
 - Lenovo Legion Pro 7i Gen 10 (**16IAX10H**)
 - Lenovo Legion Pro 7 Gen 10 (**[16AFR10H](https://github.com/nadimkobeissi/16iax10h-linux-sound-saga/issues/30)**)
@@ -20,9 +20,54 @@ To our surprise, this fix actually fixed audio on more laptops than just the 16I
 - Lenovo Legion Y9000P (**[IAX10H](https://github.com/nadimkobeissi/16iax10h-linux-sound-saga/issues/42)**)
 - Lenovo Legion R9000P (**[ADR10](https://github.com/marco-giunta/legion-pro7-gen10-audio/issues/3)**)
 
-If your laptop has a similar sound architecture and you're running into similar problems, please try this fix and let us know if it works for you too!
+This patch may apply to other devices with the same sound architecture (aw88399 smart amp driving two woofers as side-codecs to a main Realtek HDA codec via I2C). To check if this holds for device x not listed above, please read [this guide](https://github.com/marco-giunta/legion-pro7-gen10-audio#will-this-patch-work-on-other-laptops).
 
-## Step 1: Install the AW88399 Firmware
+## Patch installation overview
+*At a high level*, getting audio working on the supported Legion requires you do the following:
+
+1. **Install the AW88399 firmware**: copy `aw88399_acf.bin` from this repository to `/lib/firmware/aw88399_acf.bin` (step 1 of the main guide below).
+2. **Obtain and modify the config file used to build your pre-existing kernel**: get the current kernel's configs using e.g. `cp /boot/config-$(uname -r) .config` or `cat /proc/config.gz | gunzip > .config`, and append at the end these lines:
+```
+CONFIG_SND_HDA_SCODEC_AW88399=m
+CONFIG_SND_HDA_SCODEC_AW88399_I2C=m
+```
+Depending on your build method, you may be able to pass these two options directly as parameters rather than via editing a pre-existing config file.
+
+3. **Patch, compile, and install the Linux kernel** (and also setup e.g. the NVIDIA drivers, initramfs, etc.)
+
+There are multiple ways to perform step 3. A universal, general purpose approach is to obtain the upstream Linux source code and use their `make` utilities (see main guide below). Alternatively, distros such as Fedora, Arch Linux, CachyOS, etc., offer automation tools that make this process much simpler.
+It's recommended you do your own research on "how to compile and install a custom patched kernel on distro x"; any such guide will be fine as long as you use the patch files from this repo, the extra config parameters from above, and have the firmware installed at the right location.
+
+For example, [the Fedora documentation](https://docs.fedoraproject.org/en-US/quick-docs/kernel-build-custom/) contains both a guide specific to Fedora (to compile and install the patched kernel in RPM format via `fedpkg`), as well as a distro-independent guide based on the vanilla kernel's `make` utilies. While the result will be equivalent for both, the former method will be much better automated regarding compilation and (un)installation.
+
+Below you'll find a step-by-step guide which is mostly meant as a general template based on the universal method; please do your own research on which tools may be available on your distro to simplify the task.
+
+## Community forks and tools
+
+Many forks contain adapted versions of the general guide in order to rely on certain distributions' automation tools; below is a table of the known forks (sorted alphabetically). If you want yours added, please open an issue or a PR.
+
+Note that, apart from [`marco-giunta/legion-pro7-gen10-audio`](https://github.com/marco-giunta/legion-pro7-gen10-audio) (Fedora-specific fork), these tools and guides have *not* been verified by the maintainers of this repo; furthermore, some may be unmaintained and/or based on deprecated versions of the patch (for example, manually configuring volume scales with `amixer` is no longer necessary). Once again, please do your own research.
+
+| Distribution | Repository | Notes |
+|---|---|---|
+|Arch Linux | [imitoy/linux-PKGBUILD](https://github.com/imitoy/linux-PKGBUILD) | Automated build and install `makepkg`-based approach, relying on a `PKGBUILD` that can automatically download the patch. |
+| Arch Linux | [zty012/16iax10h-linux-sound-saga](https://github.com/zty012/16iax10h-linux-sound-saga/blob/main/ARCH.md) | Simplified compilation & installation method based on editing the `PKGBUILD` file of the `linux` package. |
+| CachyOS | (none) | Patch series v1 has been merged in [Cachy kernel 7.2-rc4-1](https://github.com/CachyOS/linux/releases/tag/cachyos-7.2-rc4-1), only the firmware installation is needed |
+| Debian | [Levithani/#62](https://github.com/nadimkobeissi/16iax10h-linux-sound-saga/issues/62) | Tutorial on compiling the patched kernel in installable `.deb` format and the NVIDIA drivers in `dkms` format. |
+| Fedora | [blogmanix/#41](https://github.com/nadimkobeissi/16iax10h-linux-sound-saga/issues/41) | Tutorial on compiling the kernel on Fedora closely following the README's method. |
+| Fedora | [marco-giunta/legion-pro7-gen10-audio](https://github.com/marco-giunta/legion-pro7-gen10-audio) | Pre-built RPMs & automated install script (zero compilation required), easyeffects profiles, comprehensive guides & FAQ. By the co-author and current maintainer of the patch. |
+| Fedora | [sebetc4/16iax10h-linux-sound-saga-fedora](https://github.com/sebetc4/16iax10h-linux-sound-saga-fedora/tree/main/patch-kernel-fedora) | Tutorial on compiling the patched kernel in RPM format via `fedpkg`, with automation build scripts. |
+| Ubuntu | [jbravoMlg/16iax10h-linux-sound-saga](https://github.com/jbravoMlg/16iax10h-linux-sound-saga/blob/add-ubuntu-26-04-audio-guide/UBUNTU_26_04.md) | Tutorial on compiling and installing the kernel in `.deb` format under Ubuntu. |
+| Ubuntu | [nuclearcat/aw88399-hda-dkms](https://github.com/nuclearcat/aw88399-hda-dkms) | Tutorial on installing the patched kernel as an external `dkms` module, no kernel compilation required. |
+| Ubuntu | [paul-lupu/legion-16iax10h-ubuntu-audio](https://github.com/paul-lupu/legion-16iax10h-ubuntu-audio) | Tutorial on compiling the kernel under Ubuntu using `make` for the kernel and `dkms` for the NVIDIA drivers. |
+
+---
+
+A detailed step-by-step guide for Arch Linux and Fedora (based on the general method) follows below.
+
+## Main guide
+
+### Step 1: Install the AW88399 Firmware
 
 Copy the `aw88399_acf.bin` file provided in this repository to `/lib/firmware/aw88399_acf.bin`:
 
@@ -32,14 +77,14 @@ cp -f fix/firmware/aw88399_acf.bin /lib/firmware/aw88399_acf.bin
 
 If you prefer to obtain your own copy of this firmware blob, [follow these instructions](https://bugzilla.kernel.org/show_bug.cgi?id=218329#c18).
 
-## Step 2: Download the Linux Kernel Sources
+### Step 2: Download the Linux Kernel Sources
 
 This patch is tested under the following kernel versions. Click the one you desire to download its corresponding source code:
 
 - [Linux 7.1.3](https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.1.3.tar.xz)
 - [Linux 7.2-rc3](https://git.kernel.org/torvalds/t/linux-7.2-rc3.tar.gz)
 
-## Step 3: Patch the Linux Kernel Sources
+### Step 3: Patch the Linux Kernel Sources
 
 Copy the `16iax10h-audio-linux-<YOUR_KERNEL_VERSION>.patch` file from this repository's `fix/patches` folder into the root of your Linux kernel source directory. Then run:
 
@@ -47,50 +92,33 @@ Copy the `16iax10h-audio-linux-<YOUR_KERNEL_VERSION>.patch` file from this repos
 patch -p1 < 16iax10h-audio-linux-<YOUR_KERNEL_VERSION>.patch
 ```
 
-The patch should apply successfully to 10 files without any errors.
+The patch should apply successfully to 14 files without any errors.
 
-## Step 4: Configure the Kernel
+Notice that, if you use a `.patch` file prepared for an older version of the kernel than the one you're compiling, you may get messages like `Hunk ... succeeded at ...`; as long as these are the only such messages, you can ignore them.
+Instead, if you see `... out of ... hunks FAILED ...`, the patch file at hand is no longer compatible with the kernel you're compiling. In this case, you should be able to find more up to date patches at [marco-giunta/legion-pro7-gen10-audio](https://github.com/marco-giunta/legion-pro7-gen10-audio).
+Alternatively, you can also fix the conflicts manually if you know how.
 
-For the fix to work, the following kernel configuration options must be enabled:
+### Step 4: Configure the Kernel
 
-```
-CONFIG_SND_HDA_SCODEC_AW88399=m
-CONFIG_SND_HDA_SCODEC_AW88399_I2C=m
-CONFIG_SND_SOC_AW88399=m
-CONFIG_SND_SOC_SOF_INTEL_TOPLEVEL=y
-CONFIG_SND_SOC_SOF_INTEL_COMMON=m
-CONFIG_SND_SOC_SOF_INTEL_MTL=m
-CONFIG_SND_SOC_SOF_INTEL_LNL=m
-```
+Start from your currently running kernel's config:
 
-Configure the rest of the kernel as appropriate for your machine. 
-
-<details>
-<summary><h3>Using your existing system kernel configuration (optional)</h3></summary>
-
-Often this configuration can be accomplished simply by dumping your current system kernel config into a `.config` file in the root of your Linux kernel source directory: 
-
-```
+```bash
+# while in your kernel source working directory, run:
+cp /boot/config-$(uname -r) .config
+# alternatively, on some distros you can also use:
 cat /proc/config.gz | gunzip > .config
 ```
 
-If configured this way, paste the kernel configuration options above into the end of the `.config`. This can be done manually or with a command:
+Then append these two lines to the resulting `.config` file:
 
 ```
-cat >> .config <<EOF
 CONFIG_SND_HDA_SCODEC_AW88399=m
 CONFIG_SND_HDA_SCODEC_AW88399_I2C=m
-CONFIG_SND_SOC_AW88399=m
-CONFIG_SND_SOC_SOF_INTEL_TOPLEVEL=y
-CONFIG_SND_SOC_SOF_INTEL_COMMON=m
-CONFIG_SND_SOC_SOF_INTEL_MTL=m
-CONFIG_SND_SOC_SOF_INTEL_LNL=m
-EOF
 ```
-</details>
 
+If you are building a kernel version newer than the one your config was compiled for, you may need to run `make olddefconfig` after appending the lines above, to resolve any new configuration symbols introduced in the newer kernel (by setting the new symbols to their default values).
 
-## Step 5: Compile and Install the Kernel
+### Step 5: Compile and Install the Kernel
 
 ```bash
 make -j24
@@ -99,7 +127,7 @@ sudo make -j24 modules_install
 sudo cp -f arch/x86/boot/bzImage /boot/vmlinuz-linux-16iax10h-audio
 ```
 
-## Step 6: Install Nvidia DKMS Drivers
+### Step 6: Install Nvidia DKMS Drivers
 
 To ensure proper graphics integration, you'll need to install the Nvidia DKMS drivers for your custom kernel.
 
@@ -125,7 +153,7 @@ You may need to replace `580.105.08` with the actual Nvidia driver version.
 
 </details>
 
-## Step 7: Generate the initramfs
+### Step 7: Generate the initramfs
 
 The process differs between distributions, as some use `dracut` while others use `mkinitcpio`. Instructions for common distributions are provided below.
 
@@ -199,11 +227,11 @@ options root=UUID=your-root-partition-uuid rw
 Replace `your-root-partition-uuid` with your actual root partition UUID (find it by running `blkid`).
 </details>
 
-## Step 8: Reboot into the Patched Kernel
+### Step 8: Reboot into the Patched Kernel
 
 Reboot into the patched kernel. After rebooting, run `uname -a` to verify that you're running the correct kernel.
 
-## Step 9: Enjoy Working Audio!
+### Step 9: Enjoy Working Audio!
 
 That's it! Your audio should now work correctly and permanently. This fix will persist across reboots with no additional steps required.
 
