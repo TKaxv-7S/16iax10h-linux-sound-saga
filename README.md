@@ -121,9 +121,9 @@ If you are building a kernel version newer than the one your config was compiled
 ### Step 5: Compile and Install the Kernel
 
 ```bash
-make -j24
-make -j24 modules
-sudo make -j24 modules_install
+make -j$(nproc)
+make -j$(nproc) modules
+sudo make -j$(nproc) modules_install
 sudo cp -f arch/x86/boot/bzImage /boot/vmlinuz-linux-16iax10h-audio
 ```
 
