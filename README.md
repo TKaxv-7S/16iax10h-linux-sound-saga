@@ -1,12 +1,14 @@
 # Guide: Linux Audio on the Lenovo Legion Pro 7i Gen 10 (16IAX10H)
 
-This guide explains how to get audio working correctly on the Lenovo Legion Pro 7i Gen 10 (**16IAX10H**). Since this solution is still very new, it will take some time for all components to be properly integrated into the Linux kernel. Until that happens, you can follow the steps below, which have been rigorously tested and are confirmed to work. This guide will be updated for future kernel versions as they are released, until the fix is fully integrated into the kernel.
+This guide explains how to get audio working correctly on the Lenovo Legion Pro 7i Gen 10 (**16IAX10H**).
 
-## Upstream patch series status
+## Upstream status
 
-The patch has been submitted to the kernel mailing lists and is currently under active review; part of the patch series has been accepted and should ship in kernel 7.3, the rest is still under review (but should follow soon).
+The AW88399 HDA side codec driver has been accepted upstream and is expected to ship with Linux kernel 7.3. Once you are running kernel 7.3 or later, the laptop's woofers will work without any custom kernel, provided the `aw88399_acf.bin` firmware is installed in `/lib/firmware` (see step 1 of the main guide below).
 
-See [#65](https://github.com/nadimkobeissi/16iax10h-linux-sound-saga/issues/65) for more info.
+Until kernel 7.3 is released, this guide explains how to enable full audio support on current kernels and will continue to be updated as needed.
+
+The only remaining step to achieve a completely zero-configuration experience is making the firmware available through the `linux-firmware` repository under a compatible license, allowing Linux distributions to install it automatically. Until then, users will need to install the firmware manually. See [#65](https://github.com/nadimkobeissi/16iax10h-linux-sound-saga/issues/65#issuecomment-5130273339) for more information on this issue and how to help with the firmware effort.
 
 ## Filing issues
 
