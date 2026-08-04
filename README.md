@@ -55,7 +55,7 @@ Note that, apart from [`marco-giunta/legion-pro7-gen10-audio`](https://github.co
 |---|---|---|
 |Arch Linux | [imitoy/linux-PKGBUILD](https://github.com/imitoy/linux-PKGBUILD) | Automated build and install `makepkg`-based approach, relying on a `PKGBUILD` that can automatically download the patch. |
 | Arch Linux | [zty012/16iax10h-linux-sound-saga](https://github.com/zty012/16iax10h-linux-sound-saga/blob/main/ARCH.md) | Simplified compilation & installation method based on editing the `PKGBUILD` file of the `linux` package. |
-| CachyOS | (none) | Patch series v1 has been merged in [Cachy kernel 7.2-rc4-1](https://github.com/CachyOS/linux/releases/tag/cachyos-7.2-rc4-1), only the firmware installation is needed |
+| CachyOS | (none) | Patch series v1 has been merged in the [Cachy kernel 7.2-rc4-1](https://github.com/CachyOS/linux/releases/tag/cachyos-7.2-rc4-1) and [7.1.6-1](https://github.com/CachyOS/linux/releases/tag/cachyos-7.1.6-1); v2 in [7.2-rc6-2](https://github.com/CachyOS/linux/releases/tag/cachyos-7.2-rc6-2). Only the firmware installation is needed |
 | Debian | [Levithani/#62](https://github.com/nadimkobeissi/16iax10h-linux-sound-saga/issues/62) | Tutorial on compiling the patched kernel in installable `.deb` format and the NVIDIA drivers in `dkms` format. |
 | Fedora | [blogmanix/#41](https://github.com/nadimkobeissi/16iax10h-linux-sound-saga/issues/41) | Tutorial on compiling the kernel on Fedora closely following the README's method. |
 | Fedora | [marco-giunta/legion-pro7-gen10-audio](https://github.com/marco-giunta/legion-pro7-gen10-audio) | Pre-built RPMs & automated install script (zero compilation required), easyeffects profiles, comprehensive guides & FAQ. By the co-author and current maintainer of the patch. |
