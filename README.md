@@ -63,6 +63,7 @@ Note that, apart from [`marco-giunta/legion-pro7-gen10-audio`](https://github.co
 | Ubuntu | [jbravoMlg/16iax10h-linux-sound-saga](https://github.com/jbravoMlg/16iax10h-linux-sound-saga/blob/add-ubuntu-26-04-audio-guide/UBUNTU_26_04.md) | Tutorial on compiling and installing the kernel in `.deb` format under Ubuntu. |
 | Ubuntu | [nuclearcat/aw88399-hda-dkms](https://github.com/nuclearcat/aw88399-hda-dkms) | Tutorial on installing the patched kernel as an external `dkms` module, no kernel compilation required. |
 | Ubuntu | [paul-lupu/legion-16iax10h-ubuntu-audio](https://github.com/paul-lupu/legion-16iax10h-ubuntu-audio) | Tutorial on compiling the kernel under Ubuntu using `make` for the kernel and `dkms` for the NVIDIA drivers. |
+| Ubuntu | [sergeych/ubuntu-encrypted-root-dracut](https://github.com/sergeych/16iax10h-linux-sound-saga/tree/ubuntu-encrypted-root-dracut) | Guide for Ubuntu 26.04 with LUKS2 encrypted root and dracut; covers a Plymouth graphical LUKS unlock failure caused by the `i915` module being absent from a custom kernel's initramfs, with a helper script to persist early `i915` loading across dracut rebuilds, AW88399 channel verification, and optional early-boot tracing for failures that occur before the encrypted root is available. |
 
 ---
 
