@@ -25,6 +25,12 @@ Please don't file issues to complain about something missing. Filing issues abou
 
 This patch may apply to other devices with the same sound architecture (aw88399 smart amp driving two woofers as side-codecs to a main Realtek HDA codec via I2C). To check if this holds for device x not listed above, please read [this guide](https://github.com/marco-giunta/legion-pro7-gen10-audio#will-this-patch-work-on-other-laptops).
 
+## Note on outdated workarounds
+
+Older versions of this patch required either adding `snd_intel_dspcfg.dsp_driver=3` as a kernel boot parameter to force SOF mode, or manually selecting the "Analog Stereo Duplex" profile in the OS sound settings. **Neither is necessary with the current patch.**
+
+The `dsp_driver=3` parameter is now actively harmful unless your `alsa-ucm-conf` package is [fully up to date](https://github.com/alsa-project/alsa-ucm-conf/commit/c17dfb63aeff72efb37996049c5dda525c33cd31), as it disables the internal microphone on older versions. Stereo 2.0 profiles are now the only available ones because the current patch suppresses the spurious 4.0 surround profiles that previously appeared alongside it. If you are following a guide that mentions either of these steps, that guide is based on an outdated version of the patch.
+
 ## Patch installation overview
 *At a high level*, getting audio working on the supported Legion requires you do the following:
 
@@ -238,6 +244,12 @@ Reboot into the patched kernel. After rebooting, run `uname -a` to verify that y
 ### Step 9: Enjoy Working Audio!
 
 That's it! Your audio should now work correctly and permanently. This fix will persist across reboots with no additional steps required.
+
+## Known limitations
+
+### Echo on the headphone jack
+
+When using a headset over the jack, audio output bleeds into the microphone input due to hardware crosstalk on the codec. This is not a Linux-specific bug; Windows fixes it through a proprietary software pipeline that cannot be replicated at the kernel level. A partial software workaround in the form of an easyeffects profile is available [here](https://github.com/marco-giunta/legion-pro7-gen10-audio/tree/legion_audio/easyeffects). For the full technical investigation, see [issue #34](https://github.com/nadimkobeissi/16iax10h-linux-sound-saga/issues/34).
 
 ## Disclaimer
 
