@@ -59,7 +59,8 @@ Note that, apart from [`marco-giunta/legion-pro7-gen10-audio`](https://github.co
 
 | Distribution | Repository | Notes |
 |---|---|---|
-|Arch Linux | [imitoy/linux-PKGBUILD](https://github.com/imitoy/linux-PKGBUILD) | Automated build and install `makepkg`-based approach, relying on a `PKGBUILD` that can automatically download the patch. |
+| Arch Linux | [imitoy/linux-PKGBUILD](https://github.com/imitoy/linux-PKGBUILD) | Automated build and install via `makepkg`, with a `PKGBUILD` that automatically downloads the patch. Companion [firmware package](https://github.com/imitoy/aw88399_acf-PKGBUILD) also available. |
+| Arch Linux | [imitoy/linux-legion-audio-fix](https://github.com/imitoy/linux-legion-audio-fix) | Pre-built pacman repository with patched kernel and firmware packages: add the repo to `/etc/pacman.conf` and install, zero compilation required. |
 | Arch Linux | [zty012/16iax10h-linux-sound-saga](https://github.com/zty012/16iax10h-linux-sound-saga/blob/main/ARCH.md) | Simplified compilation & installation method based on editing the `PKGBUILD` file of the `linux` package. |
 | CachyOS | (none) | Patch series v1 has been merged in the [Cachy kernel 7.2-rc4-1](https://github.com/CachyOS/linux/releases/tag/cachyos-7.2-rc4-1) and [7.1.6-1](https://github.com/CachyOS/linux/releases/tag/cachyos-7.1.6-1); v2 in [7.2-rc6-2](https://github.com/CachyOS/linux/releases/tag/cachyos-7.2-rc6-2). Only the firmware installation is needed |
 | Debian | [Levithani/#62](https://github.com/nadimkobeissi/16iax10h-linux-sound-saga/issues/62) | Tutorial on compiling the patched kernel in installable `.deb` format and the NVIDIA drivers in `dkms` format. |
