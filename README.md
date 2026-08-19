@@ -4,7 +4,8 @@ This guide explains how to get audio working correctly on the Lenovo Legion Pro 
 
 ## Upstream status
 
-The AW88399 HDA side codec driver has been accepted upstream and is expected to ship with Linux kernel 7.3. Once you are running kernel 7.3 or later, the laptop's woofers will work without any custom kernel, provided the `aw88399_acf.bin` firmware is installed in `/lib/firmware` (see step 1 of the main guide below).
+The AW88399 HDA side codec driver has been merged into the Linux kernel and will ship [starting with kernel 7.3-rc1](https://github.com/torvalds/linux/commit/e5c91aac491def6ab3f90c4cc246e3fcb0f8f058).
+Once you are running kernel 7.3-rc1 or later, the laptop's woofers will work without any custom kernel, provided the `aw88399_acf.bin` firmware is installed in `/lib/firmware` (see step 1 of the main guide below).
 
 Until kernel 7.3 is released, this guide explains how to enable full audio support on current kernels and will continue to be updated as needed.
 
